@@ -54,10 +54,7 @@ app.use("/posts",postRoutes)
 
 // Mongoose setup
 const PORT=process.env.PORT || 6001;
-mongoose.connect(process.env.MONGO_URL,{
-    useNewUrlParser:true,
-    useUnifiedTopology:true,
-}).then(()=>{
+mongoose.connect(process.env.MONGO_URL).then(()=>{
     app.listen(PORT,()=>{console.log(`Server live at port : ${PORT}`)});
 
     // Add data only once
