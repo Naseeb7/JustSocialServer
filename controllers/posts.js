@@ -4,13 +4,13 @@ import User from "../models/User.js";
 // Create
 export const createPost = async (req,res)=>{
     try {
-        const{userId,description,picturePath}=req.body;
+        const{userId,description,picturePath,location}=req.body;
         const user=await User.findById(userId);
         const newPost = new Post({
             userId,
             firstName: user.firstName,
             lastName: user.lastName,
-            location: user.location,
+            location:location!="" ? location : user.location,
             description,
             userPicturePath:user.picturePath,
             picturePath,
@@ -52,7 +52,7 @@ export const likePost= async (req,res)=>{
     try {
         const {id}=req.params;
         const {userId}=req.body;
-        const post =await Post.find(id);
+        const post =await Post.findById(id);
         const isLiked = post.likes.get(userId);
 
         if(isLiked){
