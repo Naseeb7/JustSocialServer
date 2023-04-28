@@ -15,8 +15,7 @@ export const createPost = async (req,res)=>{
             description,
             userPicturePath:user.picturePath,
             picturePath,
-            likes:{},
-            comments:{}
+            likes:{}
         })
         await newPost.save();
 
@@ -101,6 +100,34 @@ export const commentPost=async (req,res)=>{
         post.comments.push(comment);
         await post.save()
         res.status(200).json(post);
+
+    } catch (error) {
+        res.status(404).json({message:error.message})
+    }
+}
+
+
+export const commentDelete=async (req,res)=>{
+    try {
+        const {id,commentId}=req.params;
+        await Comment.findByIdAndDelete(commentId)
+        const post =await Post.findById(id).populate('comments');
+        await post.comments.remove(commentId)
+        await post.save()
+        res.status(200).json(post);
+
+    } catch (error) {
+        res.status(404).json({message:error.message})
+    }
+}
+
+
+export const deletePost=async (req,res)=>{
+    try {
+        const {id}=req.params;
+        await Post.findByIdAndDelete(id)
+        const posts=await Post.find()
+        res.status(200).json(posts);
 
     } catch (error) {
         res.status(404).json({message:error.message})
