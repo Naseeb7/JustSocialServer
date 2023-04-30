@@ -1,4 +1,7 @@
 import User from "../models/User.js";
+import Post from "../models/Posts.js";
+import mongoose from "mongoose";
+import bcrypt from "bcrypt"
 
 // READ
 export const getUser = async (req, res) => {
@@ -66,3 +69,32 @@ export const addRemoveFriend=async (req,res)=>{
         res.status(404).json({ error: error.message })
     }
 }
+
+export const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {firstName, lastName, location, occupation, password}=req.body
+        const userpwd=await User.findById(id)
+        const comparePwd=await bcrypt.compare(password,userpwd.password)
+        if(comparePwd){
+            await User.findByIdAndUpdate(id,{
+                firstName : firstName,
+                lastName : lastName,
+                location : location,
+                occupation : occupation
+            });
+            const post=await Post.updateMany({userId:id},{$set:{
+                firstName : firstName,
+                lastName : lastName,
+                location : location,
+                occupation : occupation}})
+            const user=await User.findById(id)
+            res.status(200).json({user,success:true})
+        }else{
+            res.status(404).json({ error: "Wrong Password",success:false })
+        }
+        
+    } catch (error) {
+        res.status(404).json({ error: error.message })
+    }
+};
