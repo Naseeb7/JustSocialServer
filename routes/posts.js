@@ -11,7 +11,7 @@ router.get("/:id",verifyToken,getPost);
 
 // Update
 router.patch("/:id/like",verifyToken,likePost);
-router.delete("/:id/deletepost",verifyToken,deletePost);
+router.delete("/:userId/:id/deletepost",verifyToken,deletePost);
 router.patch("/:id/comment",verifyToken,commentPost);
 router.delete("/:id/commentdelete/:commentId",verifyToken,commentDelete);
 

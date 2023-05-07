@@ -4,6 +4,7 @@ import Comment from "../models/Comment.js";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt"
 import fs from "fs"
+import Notification from "../models/Notification.js";
 
 // READ
 export const getUser = async (req, res) => {
@@ -11,6 +12,14 @@ export const getUser = async (req, res) => {
         const { id } = req.params;
         const user = await User.findById(id);
         res.status(200).json(user);
+    } catch (error) {
+        res.status(404).json({ error: error.message })
+    }
+}
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({},{ firstName : 1, lastName : 1, picturePath: 1});
+        res.status(200).json(users);
     } catch (error) {
         res.status(404).json({ error: error.message })
     }
@@ -34,6 +43,16 @@ export const getUserFriends = async (req, res) => {
     }
 };
 
+export const getUserNotifications = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id).populate('notifications');
+        res.status(200).json(user.notifications)
+    } catch (error) {
+        res.status(404).json({ error: error.message })
+    }
+};
+
 // Update
 export const addRemoveFriend = async (req, res) => {
     try {
@@ -43,10 +62,30 @@ export const addRemoveFriend = async (req, res) => {
 
         if (user !== friend) {
             if (user.friends.includes(friendId)) {
+                const notification = new Notification({
+                    userId: id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    type:"friend",
+                    notification: `${user.firstName} ${user.lastName} removed you from friend.`,
+                    userPicturePath: user.picturePath,
+                });
+                await notification.save();
+                friend.notifications.push(notification)
                 user.friends = user.friends.filter((id) => id !== friendId);
                 friend.friends = friend.friends.filter((id) => id !== id);
             }
             else {
+                const notification = new Notification({
+                    userId: id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    type:"friend",
+                    notification: `${user.firstName} ${user.lastName} added you as friend.`,
+                    userPicturePath: user.picturePath,
+                });
+                await notification.save();
+                friend.notifications.push(notification)
                 user.friends.push(friendId);
                 friend.friends.push(id);
             }
@@ -167,55 +206,62 @@ export const changePicture = async (req, res) => {
 export const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
+        const {password}=req.body;
         const directoryPath = "public/assets/";
         const user = await User.findById(id)
         const posts = await Post.find();
-        for (let i in posts) {
-            const post = await Post.findById(posts[i]._id).populate('comments');
-            const isLiked = post.likes.get(id);
-            post.comments = post.comments.filter((comment) => comment.userId !== id)
-            await post.save()
-            if (isLiked) {
-                post.likes.delete(id);
-            }
-            await post.save()
-            if (post.userId === id) {
-                const exists = fs.existsSync(`${directoryPath}${post.picturePath}`)
-
-                if (exists) {
-                    fs.unlink(`${directoryPath}${post.picturePath}`, async (err) => {
-                        if (err) {
-                            res.status(500).send({
-                                message: "Could not delete the file. " + err,
-                            });
-                        }
-                    })
+        const comparePwd = await bcrypt.compare(password, user.password)
+        if(comparePwd){
+            for (let i in posts) {
+                const post = await Post.findById(posts[i]._id).populate('comments');
+                const isLiked = post.likes.get(id);
+                post.comments = post.comments.filter((comment) => comment.userId !== id)
+                await post.save()
+                if (isLiked) {
+                    post.likes.delete(id);
+                }
+                await post.save()
+                if (post.userId === id) {
+                    const exists = fs.existsSync(`${directoryPath}${post.picturePath}`)
+    
+                    if (exists) {
+                        fs.unlink(`${directoryPath}${post.picturePath}`, async (err) => {
+                            if (err) {
+                                res.status(500).send({
+                                    message: "Could not delete the file. " + err,
+                                });
+                            }
+                        })
+                    }
                 }
             }
+    
+            let friends = user.friends
+            for (let j in friends) {
+                const friend = await User.findById(friends[j])
+                friend.friends = friend.friends.filter((id) => id !== id)
+                await friend.save()
+            }
+            const exist = fs.existsSync(`${directoryPath}${user.picturePath}`)
+    
+                    if (exist) {
+                        fs.unlink(`${directoryPath}${user.picturePath}`, async (err) => {
+                            if (err) {
+                                res.status(500).send({
+                                    message: "Could not delete the file. " + err,
+                                });
+                            }
+                        })
+                    }
+    
+            await Post.deleteMany({ userId: id })
+            await Comment.deleteMany({ userId: id })
+            await Notification.deleteMany({ userId: id })
+            await User.findByIdAndDelete(id)
+            res.status(200).json({ success: true })
+        }else{
+            res.status(404).json({error: "Wrong Password!", success:false})
         }
-
-        let friends = user.friends
-        for (let j in friends) {
-            const friend = await User.findById(friends[j])
-            friend.friends = friend.friends.filter((id) => id !== id)
-            await friend.save()
-        }
-        const exist = fs.existsSync(`${directoryPath}${user.picturePath}`)
-
-                if (exist) {
-                    fs.unlink(`${directoryPath}${user.picturePath}`, async (err) => {
-                        if (err) {
-                            res.status(500).send({
-                                message: "Could not delete the file. " + err,
-                            });
-                        }
-                    })
-                }
-
-        await Post.deleteMany({ userId: id })
-        await Comment.deleteMany({ userId: id })
-        await User.findByIdAndDelete(id)
-        res.status(200).json({ success: true })
     } catch (error) {
         res.status(404).json({ error: error.message })
     }

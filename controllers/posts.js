@@ -2,6 +2,7 @@ import Post from "../models/Posts.js";
 import User from "../models/User.js";
 import Comment from "../models/Comment.js";
 import fs from "fs"
+import Notification from "../models/Notification.js";
 
 // Create
 export const createPost = async (req, res) => {
@@ -20,8 +21,9 @@ export const createPost = async (req, res) => {
         })
         await newPost.save();
 
-        const post = await Post.find();
-        res.status(201).json(post);
+        const posts = await Post.find();
+        const userposts= await Post.find({userId})
+        res.status(201).json({posts,userposts});
 
     } catch (error) {
         res.status(409).json({ message: error.message })
@@ -64,6 +66,8 @@ export const likePost = async (req, res) => {
         const { id } = req.params;
         const { userId } = req.body;
         const post = await Post.findById(id);
+        const user = await User.findById(userId)
+        const friend = await User.findById(post.userId)
         const isLiked = post.likes.get(userId);
 
         if (isLiked) {
@@ -71,6 +75,21 @@ export const likePost = async (req, res) => {
         }
         else {
             post.likes.set(userId, true)
+            if (userId !== post.userId) {
+                const notification = new Notification({
+                    userId: userId,
+                    postId: id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    type: "post",
+                    notification: `${user.firstName} ${user.lastName} liked your post.`,
+                    userPicturePath: user.picturePath,
+                    postPicturePath: post.picturePath,
+                });
+                await notification.save();
+                friend.notifications.push(notification)
+                await friend.save()
+            }
         }
 
         const updatedPost = await Post.findByIdAndUpdate(
@@ -89,6 +108,7 @@ export const commentPost = async (req, res) => {
         const { id } = req.params;
         const { userId, firstName, lastName, userPicturePath } = req.body;
         const post = await Post.findById(id).populate('comments');
+        const friend= await User.findById(post.userId)
 
         const comment = new Comment({
             userId: userId,
@@ -100,6 +120,21 @@ export const commentPost = async (req, res) => {
         await comment.save();
         post.comments.push(comment);
         await post.save()
+        if (userId !== post.userId) {
+            const notification = new Notification({
+                userId: userId,
+                postId: id,
+                firstName: firstName,
+                lastName: lastName,
+                type: "post",
+                notification: `${firstName} ${lastName} commented on your post.`,
+                userPicturePath: userPicturePath,
+                postPicturePath: post.picturePath,
+            });
+            await notification.save();
+            friend.notifications.push(notification)
+            await friend.save()
+        }
         res.status(200).json(post);
 
     } catch (error) {
@@ -125,7 +160,7 @@ export const commentDelete = async (req, res) => {
 
 export const deletePost = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id,userId } = req.params;
         const { picturePath } = req.body;
         const directoryPath = "public/assets/";
         const exists = fs.existsSync(`${directoryPath}${picturePath}`)
@@ -141,7 +176,8 @@ export const deletePost = async (req, res) => {
 
                 await Post.findByIdAndDelete(id)
                 const posts = await Post.find()
-                res.status(200).json(posts);
+                const userposts=await Post.find({userId})
+                res.status(200).json({posts,userposts});
             })
         }
 

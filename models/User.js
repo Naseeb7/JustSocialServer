@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Notification from "./Notification.js";
 const UserSchema = new mongoose.Schema(
     {
         firstName : {
@@ -32,6 +33,11 @@ const UserSchema = new mongoose.Schema(
             type : Array,
             default : [],
         },
+        notifications:[
+            {
+                type: mongoose.Schema.Types.ObjectId, ref: Notification
+            }
+        ],
         location : String,
         occupation : String,
         viewedProfile : Number,
