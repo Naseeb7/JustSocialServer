@@ -7,7 +7,8 @@ import {
     changePassword,
     deleteUser,
     getUserNotifications,
-    getAllUsers
+    getAllUsers,
+    readAllNotifications
 } from "../controllers/users.js";
 import {verifyToken} from "../middleware/auth.js"
 
@@ -18,6 +19,7 @@ router.get("/:id",verifyToken,getUser);
 router.get("/:id/friends",verifyToken,getUserFriends);
 router.get("/:id/notifications",verifyToken,getUserNotifications);
 router.get("/:id/getallusers",verifyToken,getAllUsers);
+router.get("/:id/readnotifications",verifyToken,readAllNotifications);
 
 // UPDATE
 router.patch("/:id/:friendId",verifyToken,addRemoveFriend);

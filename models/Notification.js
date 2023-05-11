@@ -6,6 +6,10 @@ const notificationSchema= mongoose.Schema(
             type: String,
             required: true
         },
+        toUserId:{
+            type: String,
+            required: true
+        },
         postId:{
             type: String,
         },
@@ -27,6 +31,10 @@ const notificationSchema= mongoose.Schema(
         },
         userPicturePath:String,
         postPicturePath:String,
+        read: {
+            type : Boolean,
+            default : false,
+        }
     },
     {timestamps: true}
 );

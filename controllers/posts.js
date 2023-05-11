@@ -78,6 +78,7 @@ export const likePost = async (req, res) => {
             if (userId !== post.userId) {
                 const notification = new Notification({
                     userId: userId,
+                    toUserId:friend._id,
                     postId: id,
                     firstName: user.firstName,
                     lastName: user.lastName,
@@ -123,6 +124,7 @@ export const commentPost = async (req, res) => {
         if (userId !== post.userId) {
             const notification = new Notification({
                 userId: userId,
+                toUserId:friend._id,
                 postId: id,
                 firstName: firstName,
                 lastName: lastName,

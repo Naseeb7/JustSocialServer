@@ -52,6 +52,20 @@ export const getUserNotifications = async (req, res) => {
         res.status(404).json({ error: error.message })
     }
 };
+export const readAllNotifications = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Notification.updateMany({toUserId : id},{
+            $set : {
+                read : true,
+            }
+        })
+        const user = await User.findById(id).populate('notifications');
+        res.status(200).json(user.notifications)
+    } catch (error) {
+        res.status(404).json({ error: error.message })
+    }
+};
 
 // Update
 export const addRemoveFriend = async (req, res) => {
@@ -64,6 +78,7 @@ export const addRemoveFriend = async (req, res) => {
             if (user.friends.includes(friendId)) {
                 const notification = new Notification({
                     userId: id,
+                    toUserId: friendId,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     type:"friend",
@@ -78,6 +93,7 @@ export const addRemoveFriend = async (req, res) => {
             else {
                 const notification = new Notification({
                     userId: id,
+                    toUserId: friendId,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     type:"friend",
