@@ -75,41 +75,50 @@ server.listen(PORT, () => {
 // change this while hosting to no cors
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
-        credentials: true,
+        origin: "http://localhost:3000"
     }
 });
 
 global.onlineUsers = new Map();
+let count = 0
 
 io.on("connection", (socket) => {
-    global.chatSocket = socket; 
+    global.chatSocket = socket;
     socket.on("add-user", (userId) => {
         onlineUsers.set(userId, socket.id);
-        console.log([...onlineUsers.keys()])
-    })
-    // socket.on("online-users", (data) => {
-    //         socket.broadcast.emit("online-users",)
-    // })
+        console.log(onlineUsers)
+        socket.broadcast.emit("online-users", [...onlineUsers.keys()])
+        count += 1;
+        console.log(count)
+    });
     socket.on("send-message", (data) => {
-        const sendUserSocket=onlineUsers.get(data.to);
-        if(sendUserSocket){
-            socket.to(sendUserSocket).emit("message-receive",data.message)
+        const sendUserSocket = onlineUsers.get(data.to);
+        if (sendUserSocket) {
+            socket.to(sendUserSocket).emit("message-receive", data.message)
         }
-    })
+    });
     socket.on("typing", (data) => {
-        const sendUserSocket=onlineUsers.get(data.to);
-        if(sendUserSocket){
-            socket.to(sendUserSocket).emit("typing",data.typing)
+        const sendUserSocket = onlineUsers.get(data.to);
+        if (sendUserSocket) {
+            socket.to(sendUserSocket).emit("typing", data.typing)
         }
-    })
+    });
     socket.on("send-notification", (data) => {
-        const sendUserSocket=onlineUsers.get(data.to);
-        if(sendUserSocket){
-            socket.to(sendUserSocket).emit("get-notification",data)
+        const sendUserSocket = onlineUsers.get(data.to);
+        if (sendUserSocket) {
+            socket.to(sendUserSocket).emit("get-notification", data)
         }
-    })
-    
+    });
+    socket.on("disconnect", (reason) => {
+        onlineUsers.forEach((value, key) => {
+            if (value === socket.id) {
+                onlineUsers.delete(key)
+            }
+        })
+        setTimeout(() => {
+            socket.broadcast.emit("online-users", [...onlineUsers.keys()])
+        }, 3000);
+    });
 })
 
 
