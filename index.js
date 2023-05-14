@@ -72,6 +72,7 @@ server.listen(PORT, () => {
     }).catch((error) => console.log(`${error} did not connect`));
 });
 
+// Websocket setup
 // change this while hosting to no cors
 const io = new Server(server, {
     cors: {
@@ -80,16 +81,12 @@ const io = new Server(server, {
 });
 
 global.onlineUsers = new Map();
-let count = 0
 
 io.on("connection", (socket) => {
     global.chatSocket = socket;
     socket.on("add-user", (userId) => {
         onlineUsers.set(userId, socket.id);
-        console.log(onlineUsers)
-        socket.broadcast.emit("online-users", [...onlineUsers.keys()])
-        count += 1;
-        console.log(count)
+        socket.broadcast.emit("online-users", [...onlineUsers.keys()]);
     });
     socket.on("send-message", (data) => {
         const sendUserSocket = onlineUsers.get(data.to);
@@ -100,7 +97,7 @@ io.on("connection", (socket) => {
     socket.on("typing", (data) => {
         const sendUserSocket = onlineUsers.get(data.to);
         if (sendUserSocket) {
-            socket.to(sendUserSocket).emit("typing", data.typing)
+            socket.to(sendUserSocket).emit("typing-data", data.typing)
         }
     });
     socket.on("send-notification", (data) => {
@@ -109,7 +106,7 @@ io.on("connection", (socket) => {
             socket.to(sendUserSocket).emit("get-notification", data)
         }
     });
-    socket.on("disconnect", (reason) => {
+    socket.on("disconnect", () => {
         onlineUsers.forEach((value, key) => {
             if (value === socket.id) {
                 onlineUsers.delete(key)
