@@ -59,11 +59,12 @@ app.use("/posts", postRoutes);
 app.use("/message", messageRoutes);
 
 // Mongoose setup
+const PORT = process.env.PORT || 6001;
 const server = http.createServer(app);
 
 server.listen(PORT, () => {
     mongoose.connect(process.env.MONGO_URL).then(() => {
-        console.log(`Server live`)
+        console.log(`Server live at port : ${PORT}`)
 
         // Add data only once
         // User.insertMany(users);
