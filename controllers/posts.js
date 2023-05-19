@@ -22,8 +22,8 @@ export const createPost = async (req, res) => {
         await newPost.save();
 
         const posts = await Post.find();
-        const userposts= await Post.find({userId})
-        res.status(201).json({posts,userposts});
+        const userposts = await Post.find({ userId })
+        res.status(201).json({ posts, userposts });
 
     } catch (error) {
         res.status(409).json({ message: error.message })
@@ -78,7 +78,7 @@ export const likePost = async (req, res) => {
             if (userId !== post.userId) {
                 const notification = new Notification({
                     userId: userId,
-                    toUserId:friend._id,
+                    toUserId: friend._id,
                     postId: id,
                     firstName: user.firstName,
                     lastName: user.lastName,
@@ -109,7 +109,7 @@ export const commentPost = async (req, res) => {
         const { id } = req.params;
         const { userId, firstName, lastName, userPicturePath } = req.body;
         const post = await Post.findById(id).populate('comments');
-        const friend= await User.findById(post.userId)
+        const friend = await User.findById(post.userId)
 
         const comment = new Comment({
             userId: userId,
@@ -124,7 +124,7 @@ export const commentPost = async (req, res) => {
         if (userId !== post.userId) {
             const notification = new Notification({
                 userId: userId,
-                toUserId:friend._id,
+                toUserId: friend._id,
                 postId: id,
                 firstName: firstName,
                 lastName: lastName,
@@ -162,10 +162,11 @@ export const commentDelete = async (req, res) => {
 
 export const deletePost = async (req, res) => {
     try {
-        const { id,userId } = req.params;
+        const { id, userId } = req.params;
         const { picturePath } = req.body;
         const directoryPath = "public/assets/";
         const exists = fs.existsSync(`${directoryPath}${picturePath}`)
+
 
 
         if (exists) {
@@ -175,13 +176,17 @@ export const deletePost = async (req, res) => {
                         message: "Could not delete the file. " + err,
                     });
                 }
-
-                await Post.findByIdAndDelete(id)
-                const posts = await Post.find()
-                const userposts=await Post.find({userId})
-                res.status(200).json({posts,userposts});
             })
         }
+        const post = await Post.findById(id)
+        for (let i in post.comments) {
+            await Comment.findByIdAndDelete(post.comments[i])
+        }
+
+        await Post.findByIdAndDelete(id)
+        const posts = await Post.find()
+        const userposts = await Post.find({ userId })
+        res.status(200).json({ posts, userposts });
 
     } catch (error) {
         res.status(404).json({ message: error.message })
