@@ -59,12 +59,11 @@ app.use("/posts", postRoutes);
 app.use("/message", messageRoutes);
 
 // Mongoose setup
-const PORT = process.env.PORT || 6001;
 const server = http.createServer(app);
 
 server.listen(PORT, () => {
     mongoose.connect(process.env.MONGO_URL).then(() => {
-        console.log(`Server live at port : ${PORT}`)
+        console.log(`Server live`)
 
         // Add data only once
         // User.insertMany(users);
@@ -74,11 +73,7 @@ server.listen(PORT, () => {
 
 // Websocket setup
 // change this while hosting to no cors
-const io = new Server(server, {
-    cors: {
-        origin: "http://localhost:3000"
-    }
-});
+const io = new Server(server);
 
 global.onlineUsers = new Map();
 
