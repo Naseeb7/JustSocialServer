@@ -18,9 +18,8 @@ import { changePicture } from "./controllers/users.js"
 import { verifyToken } from "./middleware/auth.js";
 import http from "http"
 import { Server } from "socket.io"
-import User from "./models/User.js";
-import Post from "./models/Posts.js";
-import { users, posts } from "./data/index.js"
+
+BaseUrl=process.env.REACT_APP_BASE_URL
 
 // Configurations
 const __filename = fileURLToPath(import.meta.url);
@@ -74,7 +73,11 @@ server.listen(PORT, () => {
 
 // Websocket setup
 // change this while hosting to no cors
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+        origin: BaseUrl
+    }
+});
 
 global.onlineUsers = new Map();
 
