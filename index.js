@@ -73,7 +73,11 @@ server.listen(PORT, () => {
 
 // Websocket setup
 // change this while hosting to no cors
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+        origin: BaseUrl,
+    }
+});
 
 global.onlineUsers = new Map();
 
