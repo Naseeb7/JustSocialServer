@@ -19,7 +19,7 @@ import { verifyToken } from "./middleware/auth.js";
 import http from "http"
 import { Server } from "socket.io"
 
-BaseUrl=process.env.REACT_APP_BASE_URL
+const BaseUrl=process.env.REACT_APP_BASE_URL
 
 // Configurations
 const __filename = fileURLToPath(import.meta.url);
@@ -75,7 +75,7 @@ server.listen(PORT, () => {
 // change this while hosting to no cors
 const io = new Server(server, {
     cors: {
-        origin: "https://astonishing-gelato-875bc7.netlify.app"
+        origin: BaseUrl
     }
 });
 
