@@ -75,7 +75,7 @@ server.listen(PORT, () => {
 // change this while hosting to no cors
 const io = new Server(server, {
     cors: {
-        origin: BaseUrl
+        origin: BaseUrl,
     }
 });
 
