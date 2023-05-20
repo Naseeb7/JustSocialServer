@@ -90,13 +90,13 @@ io.on("connection", (socket) => {
     socket.on("send-message", (data) => {
         const sendUserSocket = onlineUsers.get(data.to);
         if (sendUserSocket) {
-            socket.to(sendUserSocket).emit("message-receive", data.message)
+            socket.to(sendUserSocket).emit("message-receive", { message : data.message, from : data.from })
         }
     });
     socket.on("typing", (data) => {
         const sendUserSocket = onlineUsers.get(data.to);
         if (sendUserSocket) {
-            socket.to(sendUserSocket).emit("typing-data", data.typing)
+            socket.to(sendUserSocket).emit("typing-data", { typing : data.typing , from : data.from })
         }
     });
     socket.on("send-notification", (data) => {
